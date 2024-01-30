@@ -1,10 +1,14 @@
-import { add, startOfToday } from "date-fns";
+import { add, isWithinInterval, startOfToday } from "date-fns";
 
 export type EventType = {
   id: number;
   title?: string;
   start_date: Date;
   end_date: Date;
+};
+
+export type GroupedEvents = {
+  events: EventType[];
 };
 
 const today = startOfToday();
@@ -41,3 +45,30 @@ export const events: EventType[] = [
     title: "Fifth",
   },
 ];
+
+export const groupEvents = (
+  events: EventType[],
+  groupedEvents: GroupedEvents[] = [],
+): GroupedEvents[] => {
+  if (events.length <= 0) {
+    return groupedEvents;
+  }
+
+  const [first, ...rest] = events;
+
+  const eventsInRage = rest.filter((event) => {
+    return isWithinInterval(event.start_date, {
+      start: first.start_date,
+      end: add(first.end_date, { minutes: -1 }),
+    });
+  });
+
+  const group = [first, ...eventsInRage];
+  const sliced = rest.slice(eventsInRage.length);
+  groupedEvents.push({
+    events: group,
+  });
+  return groupEvents(sliced, groupedEvents);
+};
+
+export const groupedEvents = groupEvents(events);
