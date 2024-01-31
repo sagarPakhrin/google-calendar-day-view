@@ -21,14 +21,12 @@ export const DayView = ({ selected_date }: DayViewProps) => {
   const [ref, setSetRef] = useState<HTMLDivElement | null>(null);
   const today = startOfToday();
 
-  console.log(groupedEvents);
-
   const hours = eachHourOfInterval({
     start: startOfDay(selected_date),
     end: endOfDay(selected_date),
   });
 
-  const getEventStyle = (e: EventType) => {
+  const getEventStyle = (group: GroupedEvents, e: EventType, idx: number) => {
     const containerHeight = ref?.offsetHeight || 1;
     const minutes_passed = differenceInMinutes(e.start_date, today);
 
@@ -38,11 +36,28 @@ export const DayView = ({ selected_date }: DayViewProps) => {
     const top = percentage * containerHeight;
     const height = (event_duration / TOTAL_MINUTES) * containerHeight;
 
-    return {
-      width: "calc(100% - 127px)",
+    const events_count = group.events.length;
+    let width_percentage = events_count === 1 ? 1 : (1 / events_count) * 1.7;
+
+    const isLast = idx === events_count - 1;
+
+    if (isLast) {
+      width_percentage = 1 / events_count;
+    }
+    const styles = {
+      width: `calc((100% - 127px) * ${width_percentage})`,
       top,
       height,
-      zIndex: "5",
+      zIndex: 5 + idx,
+    };
+
+    if (isLast) {
+      return { ...styles, right: 0 };
+    }
+
+    return {
+      ...styles,
+      left: `calc(127px + 100% * ${(1 / events_count) * idx})`,
     };
   };
 
@@ -69,10 +84,10 @@ export const DayView = ({ selected_date }: DayViewProps) => {
       <div className="overflow-y-scroll flex-1 max-h-full pb-56">
         <div className="relative" ref={(divRef) => setSetRef(divRef)}>
           {groupedEvents.map((group) =>
-            group.events.map((event) => (
+            group.events.map((event, idx) => (
               <div
-                className="bg-blue-400 text-white text-xs rounded py-1 px-2 absolute right-0"
-                style={getEventStyle(event)}
+                className="bg-blue-400 text-white text-xs rounded py-1 px-2 absolute border border-gray-100"
+                style={getEventStyle(group, event, idx)}
                 key={event.id}
               >
                 {event.title}
